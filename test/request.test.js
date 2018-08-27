@@ -10,16 +10,17 @@ describe('HTTP Request', () => {
       path: '/',
     })
 
-    expect(request.method).to.equal('GET')
-
-    expect(request.path).to.equal('/')
-    expect(request.pathComponents).to.eql([])
-
-    expect(request.headers).to.eql({})
-    expect(request.headerValues).to.eql({})
-
-    expect(request.parameters).to.eql({})
-    expect(request.parameterValues).to.eql({})
+    expect(request).to.eql({
+      method: 'GET',
+      path: '/',
+      pathComponents: [],
+      headers: {},
+      headerValues: {},
+      parameters: {},
+      parameterValues: {},
+      query: null,
+      body: null,
+    })
   })
 
   it('should construct a more complex request with a query string', () => {
@@ -38,41 +39,43 @@ describe('HTTP Request', () => {
       },
     })
 
-    expect(request.method).to.equal('GET')
+    expect(request).to.eql({
+      method: 'GET',
+      path: '/f%2Fo/b%26r/b%5Ez',
+      pathComponents: [ 'f%2Fo', 'b%26r', 'b%5Ez' ],
+      headers: {
+        'first': 'string',
+        'second': '1',
+        'third': 'true',
+        'fourth': '0',
+        'sixth': '1',
+      },
+      headerValues: {
+        'first': [ 'string' ],
+        'second': [ '1', 'TWO', '3', 'four' ],
+        'third': [ 'true' ],
+        'fourth': [ '0' ],
+        'sixth': [ '1', 'TWO', '3' ],
+      },
+      parameters: {
+        'FIRST': 'string',
+        'Second': '1',
+        'second': 'four',
+        'third': 'true',
+        'fourth': '0',
+        'SiXtH': '1',
+      },
+      parameterValues: {
+        'FIRST': [ 'string' ],
+        'Second': [ '1', 'TWO', '3' ],
+        'second': [ 'four' ],
+        'third': [ 'true' ],
+        'fourth': [ '0' ],
+        'SiXtH': [ '1', 'TWO', '3' ],
+      },
+      query: 'FIRST=string&Second=1&Second=TWO&Second=3&second=four&third=true&fourth=0&SiXtH=1&SiXtH=TWO&SiXtH=3',
 
-    expect(request.path).to.equal('/f%2Fo/b%26r/b%5Ez')
-    expect(request.pathComponents).to.eql([ 'f%2Fo', 'b%26r', 'b%5Ez' ])
-
-    expect(request.headers).to.eql({
-      'first': 'string',
-      'second': 'four',
-      'third': 'true',
-      'fourth': '0',
-      'sixth': '3',
-    })
-    expect(request.headerValues).to.eql({
-      'first': [ 'string' ],
-      'second': [ '1', 'TWO', '3', 'four' ],
-      'third': [ 'true' ],
-      'fourth': [ '0' ],
-      'sixth': [ '1', 'TWO', '3' ],
-    })
-
-    expect(request.parameters, 'parameters').to.eql({
-      'FIRST': 'string',
-      'Second': '3',
-      'second': 'four',
-      'third': 'true',
-      'fourth': '0',
-      'SiXtH': '3',
-    })
-    expect(request.parameterValues, 'parameterValues').to.eql({
-      'FIRST': [ 'string' ],
-      'Second': [ '1', 'TWO', '3' ],
-      'second': [ 'four' ],
-      'third': [ 'true' ],
-      'fourth': [ '0' ],
-      'SiXtH': [ '1', 'TWO', '3' ],
+      body: null,
     })
   })
 
@@ -100,41 +103,42 @@ describe('HTTP Request', () => {
       },
     })
 
-    expect(request.method).to.equal('GET')
-
-    expect(request.path).to.equal('/f%2Fo/b%26r/b%5Ez')
-    expect(request.pathComponents).to.eql([ 'f%2Fo', 'b%26r', 'b%5Ez' ])
-
-    expect(request.headers).to.eql({
-      'first': 'string',
-      'second': 'four',
-      'third': 'true',
-      'fourth': '0',
-      'sixth': '3',
-    })
-    expect(request.headerValues).to.eql({
-      'first': [ 'string' ],
-      'second': [ '1', 'TWO', '3', 'four' ],
-      'third': [ 'true' ],
-      'fourth': [ '0' ],
-      'sixth': [ '1', 'TWO', '3' ],
-    })
-
-    expect(request.parameters, 'parameters').to.eql({
-      'FIRST': 'string',
-      'Second': '3',
-      'second': 'four',
-      'third': 'true',
-      'fourth': '0',
-      'SiXtH': '3',
-    })
-    expect(request.parameterValues, 'parameterValues').to.eql({
-      'FIRST': [ 'string' ],
-      'Second': [ '1', 'TWO', '3' ],
-      'second': [ 'four' ],
-      'third': [ 'true' ],
-      'fourth': [ '0' ],
-      'SiXtH': [ '1', 'TWO', '3' ],
+    expect(request).to.eql({
+      method: 'GET',
+      path: '/f%2Fo/b%26r/b%5Ez',
+      pathComponents: [ 'f%2Fo', 'b%26r', 'b%5Ez' ],
+      headers: {
+        'first': 'string',
+        'second': '1',
+        'third': 'true',
+        'fourth': '0',
+        'sixth': '1',
+      },
+      headerValues: {
+        'first': [ 'string' ],
+        'second': [ '1', 'TWO', '3', 'four' ],
+        'third': [ 'true' ],
+        'fourth': [ '0' ],
+        'sixth': [ '1', 'TWO', '3' ],
+      },
+      parameters: {
+        'FIRST': 'string',
+        'Second': '1',
+        'second': 'four',
+        'third': 'true',
+        'fourth': '0',
+        'SiXtH': '1',
+      },
+      parameterValues: {
+        'FIRST': [ 'string' ],
+        'Second': [ '1', 'TWO', '3' ],
+        'second': [ 'four' ],
+        'third': [ 'true' ],
+        'fourth': [ '0' ],
+        'SiXtH': [ '1', 'TWO', '3' ],
+      },
+      query: null,
+      body: null,
     })
   })
 
