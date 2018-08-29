@@ -73,19 +73,12 @@ function adapt(handler) {
 
     /* Simple parsing of request */
     try {
-      let { method, url, rawHeaders } = req
+      let { method, url, rawHeaders: headers } = req
+      let [ path, query ] = url.split(/\?(.*)/)
+
       let body = await read(req)
 
-      let path, query, pos = url.indexOf('?')
-      if (pos < 0) {
-        path = url
-        query = ''
-      } else {
-        path = url.substr(0, pos)
-        query = url.substr(pos + 1)
-      }
-
-      let request = new Request({ method, path, query, headers: rawHeaders, body })
+      let request = new Request({ method, path, query, headers, body })
       let response = new Response(404)
       let result = handler(request, response)
 
