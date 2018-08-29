@@ -26,7 +26,7 @@ describe('HTTP Server', () => {
     expect(s).to.be.an('object')
     expect(s.host).to.equal('127.0.0.1')
     expect(s.port).to.be.a('number')
-    expect(s.close).to.be.a('function')
+    expect(s.stop).to.be.a('function')
     expect(s.server).to.be.instanceof(http.Server)
 
     /* Remember this, when we close() it will be -1 */
@@ -37,7 +37,7 @@ describe('HTTP Server', () => {
       let r = await request.get(`http://127.0.0.1:${s.port}/`, options)
       expect(r.statusCode).to.equal(204)
     } finally {
-      await s.close()
+      await s.stop()
     }
 
     /* Check the server was closed */
@@ -64,7 +64,7 @@ describe('HTTP Server', () => {
       expect(s.host).to.equal('0.0.0.0')
       expect(s.port).to.equal(port)
     } finally {
-      await s.close()
+      await s.stop()
     }
   })
 
@@ -77,7 +77,7 @@ describe('HTTP Server', () => {
       expect(s.host).to.equal('127.0.0.1')
       expect(s.port).to.equal(port)
     } finally {
-      await s.close()
+      await s.stop()
     }
   })
 
@@ -91,7 +91,7 @@ describe('HTTP Server', () => {
       expect(s.host).to.equal('127.0.0.1')
       expect(s.port).to.equal(port)
     } finally {
-      await s.close()
+      await s.stop()
     }
   })
 
@@ -104,7 +104,7 @@ describe('HTTP Server', () => {
       expect(s.host).to.equal('127.0.0.1')
       expect(s.port).to.equal(port)
     } finally {
-      await s.close()
+      await s.stop()
     }
   })
 
@@ -125,7 +125,7 @@ describe('HTTP Server', () => {
     expect(r.statusCode).to.equal(204)
 
     /* Close the server */
-    await s.close()
+    await s.stop()
   })
 
   it('should process a request with a gzipped body', async () => {
@@ -145,7 +145,7 @@ describe('HTTP Server', () => {
     expect(r.statusCode).to.equal(204)
 
     /* Close the server */
-    await s.close()
+    await s.stop()
   })
 
   it('should not process a request with the wrong content encoding', async () => {
@@ -179,7 +179,7 @@ describe('HTTP Server', () => {
       expect(body.stack).to.be.an('array')
       expect(body.stack[0]).to.equal('415 Unsupported Media Type: Unsupported Content-Encoding "foo"')
     } finally {
-      await s.close()
+      await s.stop()
     }
   })
 })
