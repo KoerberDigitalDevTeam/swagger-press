@@ -16,12 +16,12 @@
     "content-type": "^1.0.4",
     "dotenv": "^6.0.0",
     "errorlog": "^1.4.4",
-    "iconv-lite": "^0.4.23",
+    "iconv-lite": "^0.4.24",
     "swagger-paths": "^1.0.0"
   },
   "devDependencies": {
     "chai": "^4.1.2",
-    "eslint": "^5.3.0",
+    "eslint": "^5.4.0",
     "eslint-config-google": "^0.9.1",
     "mocha": "^5.2.0",
     "request": "^2.88.0",
