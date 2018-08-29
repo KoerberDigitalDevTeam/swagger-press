@@ -29,6 +29,9 @@ describe('HTTP Server', () => {
     expect(s.close).to.be.a('function')
     expect(s.server).to.be.instanceof(http.Server)
 
+    /* Remember this, when we close() it will be -1 */
+    let serverPort = s.port
+
     /* Test connectivity and close server */
     try {
       let r = await request.get(`http://127.0.0.1:${s.port}/`, options)
@@ -49,7 +52,7 @@ describe('HTTP Server', () => {
     expect(error.message).to.match(/ECONNREFUSED/)
 
     /* All good */
-    port = s.port
+    port = serverPort
   })
 
   it('should construct a server with host and port (1)', async function() {
