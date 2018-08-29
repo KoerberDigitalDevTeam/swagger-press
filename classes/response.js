@@ -86,6 +86,10 @@ class Response {
 
     return { statusCode, statusMessage, headers: headers.values(), body }
   }
+
+  get headers() {
+    return instanceData.get(this).headers
+  }
 }
 
 module.exports = Response
