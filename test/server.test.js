@@ -169,9 +169,9 @@ describe('HTTP Server', () => {
 
       expect(body.statusCode).to.equal(415)
       expect(body.statusMessage).to.equal('Unsupported Media Type')
-      expect(body.details).to.equal('Unsupported Content-Encoding "foo"')
+      expect(body.message).to.equal('Unsupported Content-Encoding "foo"')
       expect(body.stack).to.be.an('array')
-      expect(body.stack[0]).to.equal('HttpError: 415 Unsupported Media Type: Unsupported Content-Encoding "foo"')
+      expect(body.stack[0]).to.equal('415 Unsupported Media Type: Unsupported Content-Encoding "foo"')
     } finally {
       await s.close()
     }
