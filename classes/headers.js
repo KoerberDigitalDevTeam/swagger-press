@@ -267,6 +267,10 @@ class Headers {
     if (! entry) return undefined
     return entry.values
   }
+
+  toJSON() {
+    return this.values()
+  }
 }
 
 module.exports = function HeadersProxy(object) {

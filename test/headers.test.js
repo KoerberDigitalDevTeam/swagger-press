@@ -1,9 +1,12 @@
 'use strict'
 
+require('errorlog').defaultLevel = process.env.LOG_LEVEL || 'OFF'
 const { expect } = require('chai')
-const Headers = require('../classes/headers')
 
-describe('Headers class', () => {
+describe('Headers', () => {
+  let Headers
+  before(() => Headers = require('../classes/headers'))
+
   describe('Construction', () => {
     it('should construct a Headers instance', () => {
       expect(Headers).to.be.a('function')
@@ -220,6 +223,26 @@ describe('Headers class', () => {
 
       expect(h.values()).to.eql({
         'Access-Control-Allow-Methods': [ 'GET, POST, OPTIONS, PUT, PATCH, LOCK, UNLOCK' ],
+      })
+    })
+  })
+
+  /* ======================================================================== */
+
+  describe('Serialization', () => {
+    it('should properly serialize in JSON', () => {
+      let body = JSON.stringify(new Headers({
+        'Content-Type': 'application/binary',
+        'content-length': 100,
+        'ACCESS-CONTROL-ALLOW-HEADERS  ': [ 'content-type', 'CONTENT-LENGTH' ],
+        'X-Foo': 'bar',
+      }))
+
+      expect(JSON.parse(body)).to.eql({
+        'Content-Type': [ 'application/binary' ],
+        'Content-Length': [ '100' ],
+        'Access-Control-Allow-Headers': [ 'Content-Type, Content-Length' ],
+        'X-Foo': [ 'bar' ],
       })
     })
   })
