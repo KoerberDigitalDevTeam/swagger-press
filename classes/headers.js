@@ -187,11 +187,18 @@ class Headers {
 
     /* From array [ { 'content-type': 'foo' }, { 'x-header': [ 'bar', 'baz' ] } ] */
     if (Array.isArray(object)) {
-      object.forEach((entry) => {
-        for (let key in entry) {
-          if (key in entry) this.add(key, entry[key])
+      /* Raw headers */
+      if (typeof object[0] === 'string') {
+        for (let i = 0; i < object.length; i += 2) {
+          this.add(object[i], object[i + 1])
         }
-      })
+      } else {
+        object.forEach((entry) => {
+          for (let key in entry) {
+            if (key in entry) this.add(key, entry[key])
+          }
+        })
+      }
 
     /* From object { 'content-type': 'foo', 'x-header': [ 'bar', 'baz' ] } */
     } else if (object && (typeof object === 'object')) {
@@ -311,8 +318,9 @@ module.exports = function HeadersProxy(object) {
       let descriptor = Object.getOwnPropertyDescriptor(target, property)
       if (descriptor) return descriptor
 
-      if (target.get(property) == null) return undefined
-      return { configurable: true, enumerable: true }
+      let value = target.get(property)
+      if (value == null) return undefined
+      return { configurable: true, enumerable: true, value }
     },
 
     deleteProperty: (target, property) => {

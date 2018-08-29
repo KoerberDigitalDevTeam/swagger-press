@@ -1,6 +1,5 @@
 'use strict'
 
-require('errorlog').defaultLevel = process.env.LOG_LEVEL || 'OFF'
 const { expect } = require('chai')
 
 describe('Headers', () => {
@@ -52,6 +51,27 @@ describe('Headers', () => {
       expect(h.values()).to.eql({
         'Content-Type': [ 'test1', 'test2' ],
         'X-Foo': [ 'hello', 'world', 'foo', 'bar', 'baz' ],
+      })
+    })
+
+    it('should construct a Headers instance with an array of raw headers', () => {
+      let h = new Headers([
+        'Content-Type', 'test1',
+        ' content-type ', 'test2',
+        'X-Foo', 'hello',
+        'x-foo', 'world',
+      ])
+
+      expect(h).to.eql({
+        'Content-Type': 'test1',
+        'X-Foo': 'hello',
+      })
+
+      expect(h.keys()).to.eql([ 'Content-Type', 'X-Foo' ])
+
+      expect(h.values()).to.eql({
+        'Content-Type': [ 'test1', 'test2' ],
+        'X-Foo': [ 'hello', 'world' ],
       })
     })
   })
