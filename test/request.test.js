@@ -5,7 +5,7 @@ const { expect } = require('chai')
 
 describe('HTTP Request', () => {
   let Request
-  before(() => Request = require('../lib/request'))
+  before(() => Request = require('../classes/request'))
 
   it('should construct a minimal request', () => {
     let request = new Request({
@@ -18,7 +18,6 @@ describe('HTTP Request', () => {
       path: '/',
       pathComponents: [],
       headers: {},
-      headerValues: {},
       parameters: {},
       parameterValues: {},
       query: null,
@@ -47,18 +46,11 @@ describe('HTTP Request', () => {
       path: '/f%2Fo/b%26r/b%5Ez',
       pathComponents: [ 'f%2Fo', 'b%26r', 'b%5Ez' ],
       headers: {
-        'first': 'string',
-        'second': '1',
+        'FIRST': 'string',
+        'Second': '1',
         'third': 'true',
         'fourth': '0',
-        'sixth': '1',
-      },
-      headerValues: {
-        'first': [ 'string' ],
-        'second': [ '1', 'TWO', '3', 'four' ],
-        'third': [ 'true' ],
-        'fourth': [ '0' ],
-        'sixth': [ '1', 'TWO', '3' ],
+        'SiXtH': '1',
       },
       parameters: {
         'FIRST': 'string',
@@ -77,8 +69,15 @@ describe('HTTP Request', () => {
         'SiXtH': [ '1', 'TWO', '3' ],
       },
       query: 'FIRST=string&Second=1&Second=TWO&Second=3&second=four&third=true&fourth=0&SiXtH=1&SiXtH=TWO&SiXtH=3',
-
       body: null,
+    })
+
+    expect(request.headers.values()).to.eql({
+      'FIRST': [ 'string' ],
+      'Second': [ '1', 'TWO', '3', 'four' ],
+      'third': [ 'true' ],
+      'fourth': [ '0' ],
+      'SiXtH': [ '1', 'TWO', '3' ],
     })
   })
 
@@ -111,18 +110,11 @@ describe('HTTP Request', () => {
       path: '/f%2Fo/b%26r/b%5Ez',
       pathComponents: [ 'f%2Fo', 'b%26r', 'b%5Ez' ],
       headers: {
-        'first': 'string',
-        'second': '1',
+        'FIRST': 'string',
+        'Second': '1',
         'third': 'true',
         'fourth': '0',
-        'sixth': '1',
-      },
-      headerValues: {
-        'first': [ 'string' ],
-        'second': [ '1', 'TWO', '3', 'four' ],
-        'third': [ 'true' ],
-        'fourth': [ '0' ],
-        'sixth': [ '1', 'TWO', '3' ],
+        'SiXtH': '1',
       },
       parameters: {
         'FIRST': 'string',
@@ -142,6 +134,14 @@ describe('HTTP Request', () => {
       },
       query: null,
       body: null,
+    })
+
+    expect(request.headers.values()).to.eql({
+      'FIRST': [ 'string' ],
+      'Second': [ '1', 'TWO', '3', 'four' ],
+      'third': [ 'true' ],
+      'fourth': [ '0' ],
+      'SiXtH': [ '1', 'TWO', '3' ],
     })
   })
 

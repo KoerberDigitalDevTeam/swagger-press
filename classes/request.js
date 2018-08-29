@@ -5,6 +5,8 @@ const iconv = require('iconv-lite')
 const querystring = require('querystring')
 const contentType = require('content-type')
 
+const Headers = require('./headers')
+
 /* ========================================================================== */
 
 /* Split a string path into its components, and re-encode each */
@@ -125,8 +127,7 @@ class Request {
     path = '/' + pathComponents.join('/')
 
     /* Normalise header values in two maps */
-    let headerValues = normaliseMap(headers, true)
-    headers = reduceMap(headerValues)
+    headers = new Headers(headers)
 
     /* Normalise query string parameter values in two maps */
     let queryString = null
@@ -149,8 +150,7 @@ class Request {
       path: { enumerable: true, value: path },
       pathComponents: { enumerable: true, value: Object.freeze(pathComponents) },
 
-      headers: { enumerable: true, value: Object.freeze(headers) },
-      headerValues: { enumerable: true, value: Object.freeze(headerValues) },
+      headers: { enumerable: true, value: headers },
 
       parameters: { enumerable: true, value: Object.freeze(parameters) },
       parameterValues: { enumerable: true, value: Object.freeze(parameterValues) },
