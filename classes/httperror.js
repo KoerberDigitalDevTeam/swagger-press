@@ -40,7 +40,7 @@ HttpError.toResponse = function toResponse(throwable) {
 
   let body = { statusCode, statusMessage }
   if (message) body.message = message
-  if (stack) body.stack = stack
+  if (stack) body.stack = stack.split('\n').map((line) => line.trim())
 
   return new Response(statusCode, body)
 }
@@ -60,7 +60,7 @@ Object.keys(STATUS_CODES).forEach((key) => {
     ).join('')
 
   /* Inject the creator function */
-  HttpError[name] = (details) => new HttpError(status, details)
+  HttpError[name] = (message) => new HttpError(status, message)
 })
 
 module.exports = HttpError

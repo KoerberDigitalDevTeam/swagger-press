@@ -80,7 +80,8 @@ describe('HTTP Errors', () => {
       message: 'No way!',
     })
 
-    expect(stack).to.match(/^404 Not Found: No way!\n/m)
+    expect(stack).to.be.an('array')
+    expect(stack[0]).to.equal('404 Not Found: No way!')
   })
 
   it('should convert an Error into a Response', () => {
@@ -113,7 +114,8 @@ describe('HTTP Errors', () => {
       message: 'Hello, world!',
     })
 
-    expect(stack).to.match(/^TypeError: Hello, world!\n/m)
+    expect(stack).to.be.an('array')
+    expect(stack[0]).to.equal('TypeError: Hello, world!')
   })
 
   it('should convert something into a Response', () => {
@@ -221,5 +223,14 @@ describe('HTTP Errors', () => {
         expect(e.statusCode, name).to.be.equal(status)
       }
     }
+  })
+
+  it('should properly create an HttpError with a constructor function', () => {
+    let error = HttpError.notFound('Go away')
+
+    expect(error.statusCode).to.equal(404)
+    expect(error.statusMessage).to.equal('Not Found')
+    expect(error.message).to.equal('Go away')
+    expect(error.stack).to.match(/^404 Not Found: Go away\n/m)
   })
 })
