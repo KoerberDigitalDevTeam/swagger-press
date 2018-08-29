@@ -6,7 +6,6 @@ const request = require('request-promise-native')
 const http = require('http')
 const zlib = require('zlib')
 
-
 const options = { resolveWithFullResponse: true }
 
 /* eslint no-invalid-this: "off" */
