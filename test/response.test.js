@@ -1,6 +1,5 @@
 'use strict'
 
-require('errorlog').defaultLevel = process.env.LOG_LEVEL || 'OFF'
 const { expect } = require('chai')
 
 describe('HTTP Response', () => {
