@@ -334,5 +334,3 @@ module.exports = function HeadersProxy(object) {
     },
   })
 }
-
-module.exports.Headers = Headers

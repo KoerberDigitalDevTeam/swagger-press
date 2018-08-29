@@ -100,7 +100,7 @@ function adapt(handler) {
 /* ========================================================================== */
 
 /* Our Server class returned by "create(...)" */
-module.exports = class Server {
+class Server {
   constructor(service, host = '127.0.0.1', port = 0) {
     if (typeof service !== 'function') throw new TypeError('Service must be a function')
 
@@ -154,3 +154,5 @@ module.exports = class Server {
     })
   }
 }
+
+module.exports = Server
