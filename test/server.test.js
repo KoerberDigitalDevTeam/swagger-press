@@ -11,16 +11,16 @@ const options = { resolveWithFullResponse: true }
 
 /* eslint no-invalid-this: "off" */
 describe('HTTP Server', () => {
-  let port = null, server, Response
+  let Server, Response, port = null
 
   before(() => {
-    server = require('../lib/server')
+    Server = require('../lib/server')
     Response = require('../classes/response')
   })
 
   it('should construct and close an anonymous server', async () => {
     /* Construct the server */
-    let s = await server(() => new Response())
+    let s = await new Server(() => new Response()).start()
 
     /* Basic checks */
     expect(s).to.be.an('object')
@@ -58,7 +58,7 @@ describe('HTTP Server', () => {
   it('should construct a server with host and port (1)', async function() {
     if (! port) return this.skip()
 
-    let s = await server(() => new Response(), '0.0.0.0', port)
+    let s = await new Server(() => new Response(), '0.0.0.0', port).start()
 
     try {
       expect(s.host).to.equal('0.0.0.0')
@@ -71,7 +71,7 @@ describe('HTTP Server', () => {
   it('should construct a server with host and port (2)', async function() {
     if (! port) return this.skip()
 
-    let s = await server(() => new Response(), null, port.toString())
+    let s = await new Server(() => new Response(), null, port.toString()).start()
 
     try {
       expect(s.host).to.equal('127.0.0.1')
@@ -85,7 +85,7 @@ describe('HTTP Server', () => {
   it('should construct a server with host and port (3)', async function() {
     if (! port) return this.skip()
 
-    let s = await server(() => new Response(), { host: null, port: port })
+    let s = await new Server(() => new Response(), { host: null, port: port }).start()
 
     try {
       expect(s.host).to.equal('127.0.0.1')
@@ -98,7 +98,7 @@ describe('HTTP Server', () => {
   it('should construct a server with host and port (4)', async function() {
     if (! port) return this.skip()
 
-    let s = await server(() => new Response(), { port: port.toString() })
+    let s = await new Server(() => new Response(), { port: port.toString() }).start()
 
     try {
       expect(s.host).to.equal('127.0.0.1')
@@ -110,7 +110,7 @@ describe('HTTP Server', () => {
 
   it('should process a request with a body', async () => {
     /* Construct the server */
-    let s = await server(() => new Response())
+    let s = await new Server(() => new Response()).start()
 
     /* Test connectivity */
     let r = await request.post({
@@ -130,7 +130,7 @@ describe('HTTP Server', () => {
 
   it('should process a request with a gzipped body', async () => {
     /* Construct the server */
-    let s = await server(() => new Response())
+    let s = await new Server(() => new Response()).start()
 
     /* Test connectivity */
     let r = await request.post({
@@ -150,7 +150,7 @@ describe('HTTP Server', () => {
 
   it('should not process a request with the wrong content encoding', async () => {
     /* Construct the server */
-    let s = await server(() => new Response())
+    let s = await new Server(() => new Response()).start()
 
     /* Test connectivity */
     let error
