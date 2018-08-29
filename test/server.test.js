@@ -14,7 +14,7 @@ describe('HTTP Server', () => {
   let Server, Response, port = null
 
   before(() => {
-    Server = require('../lib/server')
+    Server = require('../classes/server')
     Response = require('../classes/response')
   })
 

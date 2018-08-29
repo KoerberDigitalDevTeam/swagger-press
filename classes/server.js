@@ -3,9 +3,9 @@
 const log = require('errorlog')({ category: 'http' })
 const accessLog = require('errorlog')()
 
-const Request = require('../classes/request')
-const Response = require('../classes/response')
-const HttpError = require('../classes/httperror')
+const Request = require('./request')
+const Response = require('./response')
+const HttpError = require('./httperror')
 
 const http = require('http')
 const zlib = require('zlib')
