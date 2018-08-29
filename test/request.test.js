@@ -1,9 +1,12 @@
 'use strict'
 
+require('errorlog').defaultLevel = process.env.LOG_LEVEL || 'OFF'
 const { expect } = require('chai')
-const Request = require('../lib/request')
 
 describe('HTTP Request', () => {
+  let Request
+  before(() => Request = require('../lib/request'))
+
   it('should construct a minimal request', () => {
     let request = new Request({
       method: 'get',
