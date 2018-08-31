@@ -1,0 +1,15 @@
+{
+  "check-coverage": true,
+  "per-file": true,
+  "lines": 99,
+  "statements": 99,
+  "functions": 99,
+  "branches": 99,
+  "watermarks": {
+    "lines": [ 95, 99 ],
+    "functions": [ 95, 99 ],
+    "branches": [ 95, 99 ],
+    "statements": [ 95, 99 ]
+  },
+  "report-dir": "./coverage"
+}

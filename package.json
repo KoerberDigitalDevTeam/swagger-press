@@ -7,7 +7,9 @@
     "test": "mocha 'test/**/*.test.js' || false",
     "lint": "eslint --cache '.eslintrc.js' '**/*js'",
     "lintfix": "eslint --cache '.eslintrc.js' '**/*js' --fix",
-    "build": "npm run lint && npm run test",
+    "coverage": "nyc --reporter=text npm run test",
+    "coverage-report": "nyc --reporter=html npm run test",
+    "build": "npm run lint && npm run coverage",
     "start": "npm run lint && npm run test && node server.js"
   },
   "author": "Pier Fumagalli <pier.fumagalli@koerber.digital>",
@@ -17,13 +19,14 @@
     "dotenv": "^6.0.0",
     "errorlog": "^1.4.4",
     "iconv-lite": "^0.4.24",
-    "swagger-paths": "^1.0.0"
+    "swagger-paths": "^1.0.1"
   },
   "devDependencies": {
     "chai": "^4.1.2",
     "eslint": "^5.4.0",
     "eslint-config-google": "^0.9.1",
     "mocha": "^5.2.0",
+    "nyc": "^13.0.1",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.5"
   }
