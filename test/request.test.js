@@ -24,6 +24,13 @@ describe('HTTP Request', () => {
     })
   })
 
+  it('should not construct with the wrong parameters', () => {
+    expect(() => new Request({ method: 123 }))
+      .to.throw(TypeError, 'Method must be a string')
+    expect(() => new Request({ method: '\t' }))
+      .to.throw(TypeError, 'Method must be a non-empty string')
+  })
+
   it('should construct a more complex request with a query string', () => {
     let request = new Request({
       method: 'get',

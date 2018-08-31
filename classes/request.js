@@ -1,6 +1,5 @@
 'use strict'
 
-const http = require('http')
 const iconv = require('iconv-lite')
 const querystring = require('querystring')
 const contentType = require('content-type')
@@ -114,12 +113,9 @@ class Request {
     let { method, path, query = {}, headers = {}, body = null } = options
 
     /* Check and normalise method */
-    if (typeof method !== 'string') throw new Error('Method must be a string')
-
-    method = method.toUpperCase()
-    if (http.METHODS.indexOf(method) < 0) {
-      console.warn(`WARNING: HTTP method "${method}" unknown`)
-    }
+    if (typeof method !== 'string') throw new TypeError('Method must be a string')
+    method = method.trim().toUpperCase()
+    if (! method) throw new TypeError('Method must be a non-empty string')
 
     /* Check and normalise path */
     if (typeof path !== 'string') throw new Error('Path must be a string ')
