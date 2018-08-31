@@ -10,7 +10,7 @@ const HttpError = require('./httperror')
 const http = require('http')
 const zlib = require('zlib')
 
-const version = ((p) => `${p.name}/${p.version}`)(require('../package.json'))
+const version = ((p) => `${p.name}/${p.version.split('.', 1)[0]}`)(require('../package.json'))
 
 /* Read the request, optionally inflating/gunzipping it */
 function read(req) {
@@ -41,9 +41,12 @@ function read(req) {
     }
 
     stream.on('data', buffers.push.bind(buffers))
-    stream.on('error', (error) => reject(new Error(error)))
-    stream.on('aborted', (error) => reject(new Error('Request Aborted')))
     stream.on('end', () => resolve(Buffer.concat(buffers)))
+
+    /* istanbul ignore next */
+    stream.on('error', (error) => reject(new Error(error)))
+    /* istanbul ignore next */
+    stream.on('aborted', (error) => reject(new Error('Request Aborted')))
   })
 }
 
@@ -94,7 +97,7 @@ function adapt(handler) {
 
 /* Our Server class returned by "create(...)" */
 class Server {
-  constructor(service, host = '127.0.0.1', port = 0) {
+  constructor(service, host, port = 0) {
     if (typeof service !== 'function') throw new TypeError('Service must be a function')
 
     /* In case we were created with { host: ..., port: 1234 } */
@@ -121,6 +124,7 @@ class Server {
     return new Promise((resolve, reject) => {
       this.server.listen(this.__port, this.__host, (error) => {
         log.info(`Server listening at http://${this.host}:${this.port}/`)
+        /* istanbul ignore if */
         if (error) return reject(error)
         resolve(this)
       })
@@ -129,18 +133,19 @@ class Server {
 
   get host() {
     let address = this.server.address()
-    return address ? address.address : '[null]'
+    return address ? address.address : null
   }
 
   get port() {
     let address = this.server.address()
-    return address ? address.port : -1
+    return address ? address.port : null
   }
 
   stop() {
     log.info(`Closing server at http://${this.host}:${this.port}/`)
     return new Promise((resolve, reject) => {
       this.server.close((error) => {
+        /* istanbul ignore if */
         if (error) return reject(error)
         resolve(this)
       })
