@@ -12,7 +12,18 @@
     "build": "npm run lint && npm run coverage",
     "start": "npm run lint && npm run test && node server.js"
   },
-  "author": "Pier Fumagalli <pier.fumagalli@koerber.digital>",
+  "author": {
+    "name": "Pier Fumagalli",
+    "email": "pier.fumagalli@koerber.digital"
+  },
+  "homepage": "https://github.com/KoerberDigitalDevTeam/swagger-press#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KoerberDigitalDevTeam/swagger-press.git"
+  },
+  "bugs": {
+    "url": "https://github.com/KoerberDigitalDevTeam/swagger-press/issues"
+  },
   "license": "Apache-2.0",
   "dependencies": {
     "content-type": "^1.0.4",
