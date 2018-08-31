@@ -22,6 +22,31 @@ describe('HTTP Response', () => {
     expect(body.length).to.equal(0)
   })
 
+  it('should not modify the response with empty calls', () => {
+    let response1 = new Response()
+
+    let response2 = response1.status()
+    expect(response1).to.equal(response2)
+
+    let response3 = response2.body()
+    expect(response2).to.equal(response3)
+
+    let response = response2.build()
+
+    let body = response.body
+    delete response.body
+
+    expect(response).to.eql({
+      statusCode: 204,
+      statusMessage: 'No Content',
+      headers: {},
+    })
+
+    expect(body).to.be.instanceof(Buffer)
+    expect(body.length).to.equal(0)
+  })
+
+
   it('should create a response with a string', () => {
     let response = new Response('hello, world').build()
 
@@ -181,10 +206,42 @@ describe('HTTP Response', () => {
     expect(body.toString('utf8').length).to.eql(10)
   })
 
-  it('should set a header value', () => {
-    let response = new Response(302, 'Go somewhere else...')
-      .set('Location', 'http://www.example.com/')
+  it('should create a response with a body and force the content type', () => {
+    let response = new Response('<html></html>')
+      .set('content-type', 'text/html')
       .build()
+
+    let body = response.body
+    delete response.body
+
+    expect(response).to.eql({
+      statusCode: 200,
+      statusMessage: 'OK',
+      headers: {
+        'Content-Type': [ 'text/html' ],
+        'Content-Length': [ '13' ],
+      },
+    })
+
+    expect(body).to.be.instanceof(Buffer)
+    expect(body.length).to.eql(13)
+    expect(body.toString('utf8')).to.equal('<html></html>')
+    expect(body.toString('utf8').length).to.eql(13)
+  })
+
+
+  it('should set and add header values', () => {
+    let responseBuilder = new Response(302, 'Go somewhere else...')
+      .set('X-My-Header', [ 'this is the value'] )
+      .add('Location', 'http://www.example.com/')
+      .add('Location', 'http://www.example.org/')
+
+    expect(responseBuilder.headers.values()).to.eql({
+      'X-My-Header': [ 'this is the value' ],
+      'Location': [ 'http://www.example.com/', 'http://www.example.org/' ],
+    })
+
+    let response = responseBuilder.build()
 
     let body = response.body
     delete response.body
@@ -193,7 +250,8 @@ describe('HTTP Response', () => {
       statusCode: 302,
       statusMessage: 'Found',
       headers: {
-        'Location': [ 'http://www.example.com/' ],
+        'X-My-Header': [ 'this is the value' ],
+        'Location': [ 'http://www.example.com/', 'http://www.example.org/' ],
         'Content-Type': [ 'text/plain; charset=UTF-8' ],
         'Content-Length': [ '20' ],
       },
