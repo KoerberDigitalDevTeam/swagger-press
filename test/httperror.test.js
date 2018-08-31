@@ -204,6 +204,13 @@ describe('HTTP Errors', () => {
     })
   })
 
+  it('should not convert a Response', () => {
+    let response1 = new Response()
+    let response2 = HttpError.toResponse(response1)
+
+    expect(response1).to.equal(response2)
+  })
+
   /* Constructor functions */
   const functions = {
     continue: 100,
