@@ -1,6 +1,8 @@
 'use strict'
 
 const { STATUS_CODES } = require('http')
+
+const statusCodes = require('../lib/statusCodes')
 const Response = require('./response')
 
 class HttpError extends Error {
@@ -11,14 +13,8 @@ class HttpError extends Error {
       status = 500
     }
 
-    let statusCode = parseInt(status)
-    if (isNaN(statusCode)) throw new TypeError(`Invalid status code ${status}`)
-    if ((statusCode < 100) || (statusCode > 599)) {
-      throw new TypeError(`Unknown HTTP status code ${statusCode}`)
-    }
-
-    /* Get the status code message */
-    let statusMessage = STATUS_CODES[statusCode] || 'Unknown'
+    /* Get status code and message */
+    let { statusCode, statusMessage } = statusCodes(status)
 
     /* Construct the error */
     super(message)
@@ -32,15 +28,15 @@ class HttpError extends Error {
 
 HttpError.toResponse = function toResponse(throwable) {
   let statusCode, statusMessage, message, stack
-  if (throwable instanceof HttpError) {
+  if (throwable instanceof Response) {
+    return throwable
+  } else if (throwable instanceof HttpError) {
     ({ statusCode, statusMessage, message, stack } = throwable)
   } else if (throwable instanceof Error) {
-    ({ message, stack } = throwable)
-    statusCode = 500
-    statusMessage = STATUS_CODES[500]
+    ({ message, stack } = throwable);
+    ({ statusCode, statusMessage } = statusCodes(500))
   } else {
-    statusCode = 500
-    statusMessage = STATUS_CODES[500]
+    ({ statusCode, statusMessage } = statusCodes(500))
     message = throwable
   }
 
