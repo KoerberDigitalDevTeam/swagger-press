@@ -1,15 +1,14 @@
 'use strict'
 
-const { STATUS_CODES } = require('http')
+const statusCodes = require('../lib/statusCodes')
 const Headers = require('./headers')
 
 const emptyBuffer = new Buffer(0)
-const instanceData = new WeakMap()
 
 class Response {
   constructor(statusOrBody, body) {
-    // Our initial state
-    instanceData.set(this, { headers: new Headers() })
+    let data = { headers: new Headers() }
+    Object.defineProperty(this, '__data', { writable: false, value: data })
 
     if (typeof statusOrBody !== 'number') {
       body = statusOrBody
@@ -23,30 +22,26 @@ class Response {
   status(statusCode, statusMessage) {
     if (! statusCode) return this
 
-    let data = instanceData.get(this)
+    let status = statusCodes(statusCode)
 
-    data.statusCode = parseInt(statusCode) || 200
-    data.statusMessage = statusMessage || STATUS_CODES[data.statusCode] || 'Unknown'
-
-    if ((data.statusCode < 100) || (data.statusCode > 599)) {
-      throw new TypeError(`Unknown HTTP status code ${statusCode}`)
-    }
+    this.__data.statusCode = status.statusCode
+    this.__data.statusMessage = statusMessage || status.statusMessage
 
     return this
   }
 
   set(name, value) {
-    instanceData.get(this).headers.set(name, value)
+    this.__data.headers.set(name, value)
     return this
   }
 
   add(name, value) {
-    instanceData.get(this).headers.add(name, value)
+    this.__data.headers.add(name, value)
     return this
   }
 
   body(body) {
-    let data = instanceData.get(this), type, buffer
+    let type, buffer
 
     if (body) {
       if (Buffer.isBuffer(body)) {
@@ -65,18 +60,18 @@ class Response {
     }
 
     /* Remember buffer and type */
-    data.body = buffer
-    data.type = type
+    this.__data.body = buffer
+    this.__data.type = type
 
     return this
   }
 
   build() {
-    let { statusCode, statusMessage, type, headers, body = emptyBuffer } = instanceData.get(this)
+    let { statusCode, statusMessage, type, headers, body = emptyBuffer } = this.__data
 
     /* Status is 200 if we have content, 204 if we don't */
     statusCode = statusCode || ( body.length ? 200 : 204 )
-    statusMessage = statusMessage || STATUS_CODES[statusCode] || 'Unknown'
+    statusMessage = statusMessage || statusCodes(statusCode).statusMessage
 
     /* Inject the "content-type" and "content-length" headers */
     if (type) {
@@ -88,7 +83,7 @@ class Response {
   }
 
   get headers() {
-    return instanceData.get(this).headers
+    return this.__data.headers
   }
 }
 
