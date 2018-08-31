@@ -4,26 +4,11 @@ const iconv = require('iconv-lite')
 const querystring = require('querystring')
 const contentType = require('content-type')
 
+const { splitPath } = require('swagger-paths')
+
 const Headers = require('./headers')
 
 /* ========================================================================== */
-
-/* Split a string path into its components, and re-encode each */
-function splitPaths(path) {
-  /* Remove duplicate, leading and trailing slashes */
-  let canonical = path.replace(/\/\/+/g, '/')
-                      .replace(/^\//, '')
-                      .replace(/\/$/, '')
-
-  /* The empty string (could be '///', or '/', or '' basically is root */
-  if (! canonical) return []
-
-  /* Split up the path components */
-  let parts = canonical.split('/')
-
-  /* Re-encode each path component */
-  return parts.map((part) => encodeURIComponent(decodeURIComponent(part)))
-}
 
 /* Convert a map into a map { key: [ val1, val2, val3 ]} */
 function normaliseMap(map = {}, toLower = false) {
@@ -119,7 +104,7 @@ class Request {
 
     /* Check and normalise path */
     if (typeof path !== 'string') throw new Error('Path must be a string ')
-    let pathComponents = splitPaths(path)
+    let pathComponents = splitPath(path)
     path = '/' + pathComponents.join('/')
 
     /* Normalise header values in two maps */
