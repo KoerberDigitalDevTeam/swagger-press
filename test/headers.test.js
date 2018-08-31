@@ -12,6 +12,13 @@ describe('Headers', () => {
       expect(new Headers()).to.eql({})
     })
 
+    it('should fail when header names are not a string', () => {
+      expect(() => new Headers().set(1, 'foo'))
+        .to.throw(TypeError, 'Header name must be of type string')
+      expect(() => new Headers().set('\t', 'foo'))
+        .to.throw(TypeError, 'Header name must be a non-empty string')
+    })
+
     it('should construct a Headers instance with an object', () => {
       let h = new Headers({
         'Content-Type': 'test1',
@@ -31,14 +38,16 @@ describe('Headers', () => {
         'Content-Type': [ 'test1', 'test2' ],
         'X-Foo': [ 'hello', 'world', 'foo', 'bar', 'baz' ],
       })
+
+      expect(h['Content-Length']).to.be.undefined
     })
 
     it('should construct a Headers instance with an array', () => {
       let h = new Headers([
-        { 'Content-Type': 'test1' },
-        { ' content-type ': 'test2' },
-        { 'X-Foo': [ 'hello', 'world' ] },
-        { ' x-foo ': [ 'foo', 'bar', 'baz' ] },
+        { 'Content-Type': 'test1 ' },
+        { ' content-type ': ' test2' },
+        { 'X-Foo': [ 'hello', 'world', '  ' ] },
+        { ' x-foo ': [ 'foo', 'bar', 'baz', null ] },
       ])
 
       expect(h).to.eql({
@@ -79,6 +88,11 @@ describe('Headers', () => {
   /* ======================================================================== */
 
   describe('Setting', () => {
+    it('should simply "set()" a header', () => {
+      let h = new Headers().set('X-Foo', 'bar')
+      expect(h).to.eql({ 'X-Foo': 'bar' })
+    })
+
     it('should override headers with the "set()" method', () => {
       let h = new Headers({ 'X-Foo': 'bar' })
 
@@ -159,6 +173,11 @@ describe('Headers', () => {
   /* ======================================================================== */
 
   describe('Appending', () => {
+    it('should simply "add()" a header', () => {
+      let h = new Headers().set('X-Foo', 'bar')
+      expect(h).to.eql({ 'X-Foo': 'bar' })
+    })
+
     it('should append header values "add()" method', () => {
       let h = new Headers({ 'X-Foo': 'bar' })
 
@@ -169,6 +188,7 @@ describe('Headers', () => {
       h.add('X-FOO', [ 'xyz', 'abc' ])
       h.add('X-None-1', 'hello 1' )
       h.add('X-None-2', [ 'hello 2', 'world' ])
+      h.add('X-No-Value')
 
       expect(h).to.eql({
         'X-Foo': 'bar',
@@ -215,6 +235,22 @@ describe('Headers', () => {
       })
     })
 
+    it('should remove duplicates in the Access-Control-...-Headers headers', () => {
+      let h = new Headers({
+        '  access-control-allow-headers  ': 'content-type,CONTENT-TYPE,Content-Type',
+        '  ACCESS-CONTROL-EXPOSE-HEADERS  ': [ 'content-type', 'CONTENT-TYPE', 'Content-Type' ],
+        '  Access-Control-Request-Headers  ': [ 'content-type,,,CONTENT-TYPE', 'Content-Type' ],
+      }).add('ACCESS-CONTROL-EXPOSE-HEADERS', 'Content-Type,,,content-type')
+        .add('Access-Control-Request-Headers', 'Content-Type, content-type  ')
+        .add('access-control-allow-headers', [ 'Content-Type', '  content-type ' ])
+
+      expect(h.values()).to.eql({
+        'Access-Control-Allow-Headers': [ 'Content-Type' ],
+        'Access-Control-Expose-Headers': [ 'Content-Type' ],
+        'Access-Control-Request-Headers': [ 'Content-Type' ],
+      })
+    })
+
     it('should normalise the value of the Access-Control-Allow-Methods header', () => {
       expect(new Headers({
         '  access-control-allow-methods  ': ' GET, post, OpTiOnS ,paTCH ',
@@ -243,6 +279,17 @@ describe('Headers', () => {
 
       expect(h.values()).to.eql({
         'Access-Control-Allow-Methods': [ 'GET, POST, OPTIONS, PUT, PATCH, LOCK, UNLOCK' ],
+      })
+    })
+
+    it('should emove duplicates in the Access-Control-Allow-Methods header', () => {
+      let h = new Headers({ '  access-control-allow-methods  ': ' GET, post, ' })
+        .add('Access-Control-Allow-Methods', ' GET ')
+        .add('Access-Control-Allow-Methods', [ 'POST', ' GET' ])
+        .add('Access-Control-Allow-Methods', [ '  post,,,, GET ' ])
+
+      expect(h.values()).to.eql({
+        'Access-Control-Allow-Methods': [ 'GET, POST' ],
       })
     })
   })

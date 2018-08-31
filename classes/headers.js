@@ -120,20 +120,17 @@ const mappings = Object.freeze(headers.reduce((map, name) => {
 }, {}))
 
 /*
- *
+ * Normalise an array of comma-separated values into an array
  */
-function processCommas(values, callback) {
-  let result = []
-  values.forEach((value) => {
-    value.replace(/\s/g, '')
-         .replace(/,+/g, ',')
-         .split(',')
-         .forEach((component) => {
-      let processed = callback(component)
-      if (processed) result.push(processed)
-    })
-  })
-  return [ result.join(', ') ]
+function processCommas(values, callback = ((x) => x)) {
+  return [ values.join(',')
+                 .replace(/\s/g, '') // get rid of spaces
+                 .replace(/,+/g, ',') // replace multiple commas
+                 .split(',') // split the string by commas
+                 .map((h) => callback(h)) // normalise the header
+                 .filter((h) => h) // only non-null non-empty values
+                 .filter((h, i, a) => a.indexOf(h) == i) // dedupe
+                 .join(', ') ] // re-combine in a comma separated string
 }
 
 /*
@@ -161,7 +158,7 @@ function normalise(header, value) {
   /* Normalise a header value to an array */
   let values = (Array.isArray(value) ? value : [ value ])
     .reduce((array, value) => {
-      if (value != null) value = value.toString()
+      if (value != null) value = value.toString().trim()
       if (value) array.push(value)
       return array
     }, [])
@@ -194,17 +191,13 @@ class Headers {
         }
       } else {
         object.forEach((entry) => {
-          for (let key in entry) {
-            if (key in entry) this.add(key, entry[key])
-          }
+          for (let key in entry) this.add(key, entry[key])
         })
       }
 
     /* From object { 'content-type': 'foo', 'x-header': [ 'bar', 'baz' ] } */
     } else if (object && (typeof object === 'object')) {
-      for (let key in object) {
-        if (key in object) this.add(key, object[key])
-      }
+      for (let key in object) this.add(key, object[key])
     }
   }
 
@@ -234,7 +227,8 @@ class Headers {
       this.__data[key] = { name, values }
     } else if (/^access-control-(allow|expose|request)-headers$/.test(key) ||
                (key == 'access-control-allow-methods')) {
-      entry.values[0] += ', ' + values
+      /* Remove duplicate entries */
+      entry.values = processCommas(entry.values.concat(values)) // .join(',').replace(/\s+/g, '').split(',')
     } else {
      entry.values = entry.values.concat(values)
     }
@@ -280,6 +274,7 @@ class Headers {
   }
 }
 
+/* istanbul ignore next | This is only proxy machinery */
 module.exports = function HeadersProxy(object) {
   return new Proxy(new Headers(object), {
     get: (target, property) => {
