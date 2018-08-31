@@ -34,8 +34,33 @@ describe('HTTP Errors', () => {
     expect(e.stack).to.match(/^200 OK\n/m)
   })
 
+  it('should construct with an unknown status code', () => {
+    let e = new HttpError(123)
+
+    expect(e.statusCode).to.equal(123)
+    expect(e.statusMessage).to.equal('Unknown')
+
+    expect(e.toString()).to.equal('123 Unknown')
+    expect(e.message).to.equal('')
+    expect(e.stack).to.match(/^123 Unknown\n/m)
+  })
+
+  it('should construct with a simple message', () => {
+    let e = new HttpError('Wait, what?')
+
+    expect(e.statusCode).to.equal(500)
+    expect(e.statusMessage).to.equal('Internal Server Error')
+
+    expect(e.toString()).to.equal('500 Internal Server Error: Wait, what?')
+    expect(e.message).to.equal('Wait, what?')
+    expect(e.stack).to.match(/^500 Internal Server Error: Wait, what\?\n/m)
+  })
+
+
   it('should not construct with an invalid status code', () => {
     expect(() => new HttpError(999)).to.throw(TypeError, 'Unknown HTTP status code 999')
+    expect(() => new HttpError(true)).to.throw(TypeError, 'Invalid status code true')
+    expect(() => new HttpError({a:1})).to.throw(TypeError, 'Invalid status code [object Object]')
   })
 
   it('should construct with a detail message', () => {
@@ -81,6 +106,39 @@ describe('HTTP Errors', () => {
 
     expect(stack).to.be.an('array')
     expect(stack[0]).to.equal('404 Not Found: No way!')
+  })
+
+  it('should convert an HttpError without message into a Response', () => {
+    let response = HttpError.toResponse(new HttpError(404))
+
+    expect(response).to.be.instanceof(Response)
+
+    let built = response.build()
+    let body = built.body
+    let headers = built.headers
+    delete built.body
+    delete built.headers
+
+    expect(built).to.eql({
+      statusCode: 404,
+      statusMessage: 'Not Found',
+    })
+
+    expect(Object.keys(headers)).to.eql([ 'Content-Type', 'Content-Length' ])
+    expect(headers['Content-Type']).to.eql([ 'application/json; charset=UTF-8' ])
+    expect(parseInt(headers['Content-Length'][0])).to.be.greaterThan(500)
+
+    let parsed = JSON.parse(body.toString('utf8'))
+    let stack = parsed.stack
+    delete parsed.stack
+
+    expect(parsed).to.eql({
+      statusCode: 404,
+      statusMessage: 'Not Found',
+    })
+
+    expect(stack).to.be.an('array')
+    expect(stack[0]).to.equal('404 Not Found')
   })
 
   it('should convert an Error into a Response', () => {

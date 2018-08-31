@@ -4,9 +4,15 @@ const { STATUS_CODES } = require('http')
 const Response = require('./response')
 
 class HttpError extends Error {
-  constructor(statusCode = 500, message) {
+  constructor(status = 500, message) {
     /* Normalize the status */
-    statusCode = parseInt(statusCode) || 500
+    if (typeof status === 'string') {
+      message = status
+      status = 500
+    }
+
+    let statusCode = parseInt(status)
+    if (isNaN(statusCode)) throw new TypeError(`Invalid status code ${status}`)
     if ((statusCode < 100) || (statusCode > 599)) {
       throw new TypeError(`Unknown HTTP status code ${statusCode}`)
     }
