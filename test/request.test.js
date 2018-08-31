@@ -29,13 +29,16 @@ describe('HTTP Request', () => {
       .to.throw(TypeError, 'Method must be a string')
     expect(() => new Request({ method: '\t' }))
       .to.throw(TypeError, 'Method must be a non-empty string')
+    expect(() => new Request({ method: 'GET', path: 123 }))
+      .to.throw(TypeError, 'Path must be a string')
+    expect(() => new Request({ method: 'GET', path: '/', body: 123 }))
+      .to.throw(TypeError, 'Body must be a buffer')
   })
 
-  it('should construct a more complex request with a query string', () => {
+  it('should construct a more complex request with headers', () => {
     let request = new Request({
       method: 'get',
       path: '///f%2fo///b&r///b^z///',
-      query: 'FIRST=string&Second=1&Second=TWO&Second=3&second=four&third=true&fourth=0&SiXtH=1&SiXtH=TWO&SiXtH=3',
       headers: {
         'FIRST': 'string',
         'Second': [ 1, 'TWO', 3 ],
@@ -51,6 +54,8 @@ describe('HTTP Request', () => {
       method: 'GET',
       path: '/f%2Fo/b%26r/b%5Ez',
       pathComponents: [ 'f%2Fo', 'b%26r', 'b%5Ez' ],
+      parameterValues: {},
+      parameters: {},
       headers: {
         'FIRST': 'string',
         'Second': '1',
@@ -58,6 +63,31 @@ describe('HTTP Request', () => {
         'fourth': '0',
         'SiXtH': '1',
       },
+      body: null,
+      query: null,
+    })
+
+    expect(request.headers.values()).to.eql({
+      'FIRST': [ 'string' ],
+      'Second': [ '1', 'TWO', '3', 'four' ],
+      'third': [ 'true' ],
+      'fourth': [ '0' ],
+      'SiXtH': [ '1', 'TWO', '3' ],
+    })
+  })
+
+
+  it('should construct a more complex request with a query string', () => {
+    let request = new Request({
+      method: 'get',
+      path: '///f%2fo///b&r///b^z///',
+      query: 'FIRST=string&Second=1&Second=TWO&Second=3&second=four&third=true&fourth=0&SiXtH=1&SiXtH=TWO&SiXtH=3&seventh',
+    })
+
+    expect(request).to.eql({
+      method: 'GET',
+      path: '/f%2Fo/b%26r/b%5Ez',
+      pathComponents: [ 'f%2Fo', 'b%26r', 'b%5Ez' ],
       parameters: {
         'FIRST': 'string',
         'Second': '1',
@@ -74,16 +104,9 @@ describe('HTTP Request', () => {
         'fourth': [ '0' ],
         'SiXtH': [ '1', 'TWO', '3' ],
       },
-      query: 'FIRST=string&Second=1&Second=TWO&Second=3&second=four&third=true&fourth=0&SiXtH=1&SiXtH=TWO&SiXtH=3',
+      headers: {},
+      query: 'FIRST=string&Second=1&Second=TWO&Second=3&second=four&third=true&fourth=0&SiXtH=1&SiXtH=TWO&SiXtH=3&seventh',
       body: null,
-    })
-
-    expect(request.headers.values()).to.eql({
-      'FIRST': [ 'string' ],
-      'Second': [ '1', 'TWO', '3', 'four' ],
-      'third': [ 'true' ],
-      'fourth': [ '0' ],
-      'SiXtH': [ '1', 'TWO', '3' ],
     })
   })
 
@@ -99,15 +122,7 @@ describe('HTTP Request', () => {
         'fourth': 0,
         'FIFTH': null,
         'SiXtH': [ '1', 'TWO', 3 ],
-      },
-      headers: {
-        'FIRST': 'string',
-        'Second': [ 1, 'TWO', 3 ],
-        'second': 'four',
-        'third': true,
-        'fourth': 0,
-        'FIFTH': null,
-        'SiXtH': [ '1', 'TWO', 3 ],
+        'seventh': [ null ],
       },
     })
 
@@ -115,13 +130,6 @@ describe('HTTP Request', () => {
       method: 'GET',
       path: '/f%2Fo/b%26r/b%5Ez',
       pathComponents: [ 'f%2Fo', 'b%26r', 'b%5Ez' ],
-      headers: {
-        'FIRST': 'string',
-        'Second': '1',
-        'third': 'true',
-        'fourth': '0',
-        'SiXtH': '1',
-      },
       parameters: {
         'FIRST': 'string',
         'Second': '1',
@@ -138,16 +146,9 @@ describe('HTTP Request', () => {
         'fourth': [ '0' ],
         'SiXtH': [ '1', 'TWO', '3' ],
       },
+      headers: {},
       query: null,
       body: null,
-    })
-
-    expect(request.headers.values()).to.eql({
-      'FIRST': [ 'string' ],
-      'Second': [ '1', 'TWO', '3', 'four' ],
-      'third': [ 'true' ],
-      'fourth': [ '0' ],
-      'SiXtH': [ '1', 'TWO', '3' ],
     })
   })
 
@@ -257,6 +258,18 @@ describe('HTTP Request', () => {
   })
 
   /* ======================================================================== */
+
+  it('should construct a request without a content type', () => {
+    let request = new Request({
+      method: 'get',
+      path: '/test',
+      body: new Buffer('e69db1e4baac', 'hex'),
+    })
+
+    /* This is an unsupported content type with no charset, return buffer */
+    expect(request.body).to.be.instanceOf(Buffer)
+    expect(request.body.toString('hex')).to.equal('e69db1e4baac')
+  })
 
   it('should construct a request with an application/binary body', () => {
     let request = new Request({

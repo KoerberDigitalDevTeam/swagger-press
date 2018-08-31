@@ -11,47 +11,33 @@ const Headers = require('./headers')
 /* ========================================================================== */
 
 /* Convert a map into a map { key: [ val1, val2, val3 ]} */
-function normaliseMap(map = {}, toLower = false) {
+function normaliseMap(map) {
   return Object.keys(map).reduce((mapped, key) => {
     let value = map[key]
-    if (toLower) key = key.toLowerCase()
-    key = key.trim()
 
-    let result = null
+    let result
     if (Array.isArray(value)) {
       result = value.reduce((array, val) => {
-        if (typeof val == 'string') array.push(val)
+        if ((typeof val === 'string') && val) array.push(val)
         else if (val != null) array.push(val.toString())
         return array
       }, [])
     } else if (typeof value == 'string') {
-      result = [ value ]
+      if (value) result = [ value ]
     } else if (value != null) {
       result = [ value.toString() ]
     }
 
-    if (result != null) {
-      if (mapped[key]) result = mapped[key].concat(result)
-      mapped[key] = result
-    }
+    if (result && result.length) mapped[key] = result
+
     return mapped
   }, {})
 }
 
 /* Reduce a map { key: [ val1, val2 ]} into a map { key: val2 } */
-function reduceMap(map = {}) {
+function reduceMap(map) {
   return Object.keys(map).reduce((mapped, key) => {
-    let value = map[key]
-
-    if (Array.isArray(value)) {
-      value = value[0]
-    }
-
-    if (typeof value == 'string') {
-      mapped[key] = value
-    } else if (value != null) {
-      mapped[key] = value.toString()
-    }
+    mapped[key] = map[key][0]
     return mapped
   }, {})
 }
@@ -59,11 +45,6 @@ function reduceMap(map = {}) {
 /* ========================================================================== */
 
 function parseBody(body, header) {
-  /* Quick checks */
-  if (body == null) return null
-  if (header == null) return body
-  if (! Buffer.isBuffer(body)) return body
-
   /* Figure out the mime type and (optional) charset */
   let { type, parameters } = contentType.parse(header)
   let { charset } = parameters
@@ -72,7 +53,7 @@ function parseBody(body, header) {
   switch (type) {
     case 'application/json':
       return JSON.parse(iconv.decode(body, charset || 'utf8'))
-      break
+
     case 'application/x-www-form-urlencoded':
       return querystring.parse(body.toString('ascii'), '&', '=', {
         decodeURIComponent: function(value) {
@@ -80,7 +61,6 @@ function parseBody(body, header) {
           return iconv.decode(buffer, charset || 'utf8')
         },
       })
-      break
   }
 
   /* No matched type, but either a text type, or charset available */
@@ -103,7 +83,6 @@ class Request {
     if (! method) throw new TypeError('Method must be a non-empty string')
 
     /* Check and normalise path */
-    if (typeof path !== 'string') throw new Error('Path must be a string ')
     let pathComponents = splitPath(path)
     path = '/' + pathComponents.join('/')
 
@@ -117,12 +96,12 @@ class Request {
       query = querystring.parse(query)
     }
 
-    let parameterValues = normaliseMap(query, false)
+    let parameterValues = normaliseMap(query)
     let parameters = reduceMap(parameterValues)
 
     /* The body we get at construction must be a Buffer */
-    if ((body != null) && (! Buffer.isBuffer(body))) throw new Error('Body must be a buffer')
-    let parsed = (body == null)
+    if ((body != null) && (! Buffer.isBuffer(body))) throw new TypeError('Body must be a buffer')
+    let parsed = (body == null) || (!('content-type' in headers))
 
     /* Instrument our object's own properties */
     Object.defineProperties(this, {
