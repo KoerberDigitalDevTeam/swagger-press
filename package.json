@@ -30,7 +30,7 @@
     "dotenv": "^6.0.0",
     "errorlog": "^1.4.4",
     "iconv-lite": "^0.4.24",
-    "swagger-paths": "^1.0.2"
+    "swagger-paths": "^1.0.3"
   },
   "devDependencies": {
     "chai": "^4.1.2",
