@@ -232,7 +232,7 @@ describe('HTTP Response', () => {
 
   it('should set and add header values', () => {
     let responseBuilder = new Response(302, 'Go somewhere else...')
-      .set('X-My-Header', [ 'this is the value'] )
+      .set('X-My-Header', [ 'this is the value' ])
       .add('Location', 'http://www.example.com/')
       .add('Location', 'http://www.example.org/')
 

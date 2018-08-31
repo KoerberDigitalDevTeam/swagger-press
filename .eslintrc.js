@@ -6,10 +6,11 @@ module.exports = {
      'ecmaVersion': 2017,
   },
   'rules': {
+    'array-bracket-spacing': [ 'error', 'always' ],
+    'guard-for-in': 'off',
     'max-len': 'off',
     'object-curly-spacing': [ 'error', 'always' ],
     'one-var': [ 'off' ],
-    'array-bracket-spacing': [ 'error', 'always' ],
     'require-jsdoc': 'off',
     'semi': [ 'error', 'never' ],
     'strict': [ 'error', 'global' ],

@@ -60,7 +60,7 @@ describe('HTTP Errors', () => {
   it('should not construct with an invalid status code', () => {
     expect(() => new HttpError(999)).to.throw(TypeError, 'Unknown HTTP status code 999')
     expect(() => new HttpError(true)).to.throw(TypeError, 'Invalid status code true')
-    expect(() => new HttpError({a:1})).to.throw(TypeError, 'Invalid status code [object Object]')
+    expect(() => new HttpError({ a: 1 })).to.throw(TypeError, 'Invalid status code [object Object]')
   })
 
   it('should construct with a detail message', () => {
