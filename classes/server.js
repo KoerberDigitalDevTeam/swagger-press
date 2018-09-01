@@ -9,15 +9,22 @@ const HttpError = require('./httperror')
 
 const http = require('http')
 const zlib = require('zlib')
+const bytes = require('bytes')
+const ms = require('ms')
 
 const version = ((p) => `${p.name}/${p.version.split('.', 1)[0]}`)(require('../package.json'))
 
 /* Read the request, optionally inflating/gunzipping it */
-function read(req) {
-  // TODO: limit length of request body
+function read(req, limit) {
   return new Promise((resolve, reject) => {
+    let length = parseInt(req.headers['content-length']) || Number.MAX_VALUE
+    if ((length != Number.MAX_VALUE) && (length > limit)) {
+      req.pause()
+      return reject(new HttpError(413, `Content-Length Too Large`))
+    }
+
     let encoding = (req.headers['content-encoding'] || 'identity').toLowerCase()
-    let buffers = [], stream = req
+    let buffers = [], stream = req, bytes = 0
 
     switch (encoding) {
       case 'identity':
@@ -37,16 +44,32 @@ function read(req) {
         break
 
       default:
-        throw HttpError.unsupportedMediaType(`Unsupported Content-Encoding "${encoding}"`)
+        req.pause()
+        reject(new HttpError(415, `Unsupported Content-Encoding "${encoding}"`))
+        return
     }
 
-    stream.on('data', buffers.push.bind(buffers))
-    stream.on('end', () => resolve(Buffer.concat(buffers)))
+    stream.on('data', (buffer) => {
+      buffers.push(buffer)
+      bytes += buffer.length
 
-    /* istanbul ignore next */
-    stream.on('error', (error) => reject(new Error(error)))
-    /* istanbul ignore next */
-    stream.on('aborted', (error) => reject(new Error('Request Aborted')))
+      /* istanbul ignore next: having troubles playing with content-length */
+      if (bytes > length) {
+        /* The request goes beyond content-length */
+        req.pause()
+        reject(new HttpError(413, `Reading beyond Content-Length`))
+      } else if (bytes > limit) {
+        /* The request is way too big... */
+        req.pause()
+        reject(new HttpError(413, `Body size limit reached`))
+      }
+    })
+
+    /* istanbul ignore next: how can we simulate a socket error? */
+    stream.on('error', (error) => reject(error))
+    stream.on('end', () => {
+      resolve(Buffer.concat(buffers))
+    })
   })
 }
 
@@ -63,8 +86,7 @@ function write(res, response) {
 }
 
 /* Adapt our request handler as a HTTP middleware */
-function adapt(handler) {
-  // TODO: ensure timeout of X secs (req.abort...)
+function adapt(handler, limit, timeout) {
   return async function adapter(req, res) {
     /* HTTP requests logging */
     let now = Date.now()
@@ -74,21 +96,50 @@ function adapt(handler) {
       accessLog(`${addr} "${req.method} ${req.url} HTTP/${req.httpVersion}" ${res.statusCode} ${sec}s`)
     })
 
+    /* Kill the request, abort the response */
+    let written = false
+    let timer = setTimeout(() => {
+      req.pause()
+      log.error(`Killing request ${req.method} ${req.url} after ${timeout}ms`)
+      write(res, new Response().status(504, 'Server Pimeout'))
+      written = true
+    }, timeout)
+
+    /* First of all, read the body */
+    let body
+    try {
+      body = await read(req, limit)
+    } catch (error) {
+      /* istanbul ignore else: it should really never happen */
+      if (error instanceof HttpError) {
+        delete error.stack // those are internal errors, no stacks
+      } else {
+        log.error(`Error reading body of ${req.method} ${req.url}`, error)
+      }
+
+      /* istanbul ignore else */
+      if (! written) write(res, HttpError.toResponse(error))
+      clearTimeout(timer)
+      return
+    }
+
     /* Simple parsing of request */
     try {
       let { method, url, rawHeaders: headers } = req
       let [ path, query ] = url.split(/\?(.*)/)
 
-      let body = await read(req)
-
       let request = new Request({ method, path, query, headers, body })
       let response = new Response(404)
-      let result = handler(request, response)
+      let result = await handler(request, response)
 
-      write(res, result || response)
+      /* istanbul ignore else */
+      if (! written) write(res, result || response)
     } catch (error) {
       log.error(`Error processing ${req.method} ${req.url}`, error)
-      write(res, HttpError.toResponse(error))
+      /* istanbul ignore else */
+      if (! written) write(res, HttpError.toResponse(error))
+    } finally {
+      clearTimeout(timer)
     }
   }
 }
@@ -111,8 +162,12 @@ class Server {
     host = host || process.env.HOST || '127.0.0.1'
     port = parseInt(port || process.env.PORT || 0)
 
+    /* Request size limit and timeout */
+    let limit = bytes(process.env.REQUEST_MAX_LENGTH) || 2097152 // default 2MB
+    let timeout = ms('' + process.env.REQUEST_TIMEOUT) || 30000 // default 30 sec
+
     /* Create server and remember it */
-    let server = http.createServer(adapt(service))
+    let server = http.createServer(adapt(service, limit, timeout))
     Object.defineProperties(this, {
       server: { enumerable: true, configurable: false, value: server },
       __host: { enumerable: false, configurable: false, value: host },
