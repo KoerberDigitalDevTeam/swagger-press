@@ -137,6 +137,56 @@ describe('HTTP Server', () => {
       }
     })
 
+    it('should correctly handle resolved promises', async function() {
+      this.slow(300)
+
+      let s = await new Server((req) => new Promise((resolve, reject) => {
+        setTimeout(() => resolve(new Response(201, 'I am done')), 100)
+      })).start()
+
+      try {
+        let r = await request.get(`http://127.0.0.1:${s.port}/`, options)
+        expect(r.statusCode).to.equal(201)
+        expect(r.statusMessage).to.equal('Created')
+        expect(r.body).to.equal('I am done')
+        expect(r.headers.server).to.match(/^swagger-press\/[0-9]+$/)
+      } finally {
+        await s.stop()
+      }
+    })
+
+    it('should correctly handle rejected promises', async function() {
+      this.slow(300)
+
+      let s = await new Server((req) => new Promise((resolve, reject) => {
+        setTimeout(() => reject(new Error('Stuff happens')), 100)
+      })).start()
+
+      let error
+      try {
+        await request.get(`http://127.0.0.1:${s.port}/`, options)
+      } catch (e) {
+        error = e
+      } finally {
+        await s.stop()
+      }
+
+      expect(error).to.be.instanceof(Error)
+      expect(error.response).to.be.an('object')
+      expect(error.response.statusCode).to.equal(500)
+      expect(error.response.statusMessage).to.equal('Internal Server Error')
+      expect(error.response.headers['content-type']).to.equal('application/json; charset=UTF-8')
+
+      let body = JSON.parse(error.response.body)
+
+      expect(body.statusCode).to.equal(500)
+      expect(body.statusMessage).to.equal('Internal Server Error')
+      expect(body.message).to.equal('Stuff happens')
+      expect(body.stack).to.be.an('array')
+      expect(body.stack[0]).to.equal('Error: Stuff happens')
+    })
+
+
     it('should have present a Response and allow it to be modified', async () => {
       let s = await new Server((req, res) => {
         res.status(201)
@@ -160,10 +210,7 @@ describe('HTTP Server', () => {
 
       let error
       try {
-        let r = await request.get(`http://127.0.0.1:${s.port}/`, options)
-        expect(r.statusCode).to.equal(201)
-        expect(r.statusMessage).to.equal('Created')
-        expect(r.body).to.equal('I am done')
+        await request.get(`http://127.0.0.1:${s.port}/`, options)
       } catch (e) {
         error = e
       } finally {
@@ -182,10 +229,7 @@ describe('HTTP Server', () => {
 
       let error
       try {
-        let r = await request.get(`http://127.0.0.1:${s.port}/`, options)
-        expect(r.statusCode).to.equal(201)
-        expect(r.statusMessage).to.equal('Created')
-        expect(r.body).to.equal('I am done')
+        await request.get(`http://127.0.0.1:${s.port}/`, options)
       } catch (e) {
         error = e
       } finally {
@@ -193,10 +237,10 @@ describe('HTTP Server', () => {
       }
 
       expect(error).to.be.instanceof(Error)
-      expect(error.response.headers['content-type']).to.equal('application/json; charset=UTF-8')
       expect(error.response).to.be.an('object')
       expect(error.response.statusCode).to.equal(500)
       expect(error.response.statusMessage).to.equal('Internal Server Error')
+      expect(error.response.headers['content-type']).to.equal('application/json; charset=UTF-8')
 
       let body = JSON.parse(error.response.body)
 
@@ -217,7 +261,7 @@ describe('HTTP Server', () => {
       expect(request.body).to.be.instanceof(Buffer)
       expect(buffer.equals(request.body), 'Wrong buffer').to.be.true
       return new Response()
-    }).start())
+    }, '127.0.0.1', 9999).start())
 
     after(async () => server && await server.stop())
 
@@ -229,7 +273,7 @@ describe('HTTP Server', () => {
       }).start()
 
       try {
-        let r = await request.get(`http://127.0.0.1:${s.port}/foo?a=b&a=c`, options)
+        let r = await request.get(`http://127.0.0.1:${s.port}/`, options)
         expect(r.statusCode).to.equal(204)
       } finally {
         await s.stop()
@@ -245,7 +289,7 @@ describe('HTTP Server', () => {
 
       try {
         let r = await request.post({
-          uri: `http://127.0.0.1:${s.port}/foo?a=b&a=c`,
+          uri: `http://127.0.0.1:${s.port}/`,
           headers: {
             'conent-type': 'application/binary',
             'x-test-header': [ 'first', 'second' ],
@@ -263,7 +307,7 @@ describe('HTTP Server', () => {
       let error
       try {
         await request.post({
-          uri: `http://127.0.0.1:${server.port}/foo?a=b&a=c`,
+          uri: `http://127.0.0.1:${server.port}/`,
           headers: {
             'conent-type': 'application/binary',
             'x-test-header': [ 'first', 'second' ],
@@ -276,10 +320,10 @@ describe('HTTP Server', () => {
       }
 
       expect(error).to.be.instanceof(Error)
-      expect(error.response.headers['content-type']).to.equal('application/json; charset=UTF-8')
       expect(error.response).to.be.an('object')
       expect(error.response.statusCode).to.equal(500)
       expect(error.response.statusMessage).to.equal('Internal Server Error')
+      expect(error.response.headers['content-type']).to.equal('application/json; charset=UTF-8')
 
       let body = JSON.parse(error.response.body)
 
@@ -292,7 +336,7 @@ describe('HTTP Server', () => {
 
     it('should process a request with a body', async () => {
       let r = await request.post({
-        uri: `http://127.0.0.1:${server.port}/foo?a=b&a=c`,
+        uri: `http://127.0.0.1:${server.port}/`,
         headers: {
           'conent-type': 'application/binary',
           'x-test-header': [ 'first', 'second' ],
@@ -303,9 +347,11 @@ describe('HTTP Server', () => {
       expect(r.statusCode).to.equal(204)
     })
 
-    it('should process a request with a deflated body', async () => {
+    it('should process a request with a deflated body', async function() {
+      this.slow(200)
+
       let r = await request.post({
-        uri: `http://127.0.0.1:${server.port}/foo?a=b&a=c`,
+        uri: `http://127.0.0.1:${server.port}/`,
         headers: {
           'content-type': 'application/binary',
           'content-encoding': 'deflate',
@@ -316,9 +362,11 @@ describe('HTTP Server', () => {
       expect(r.statusCode).to.equal(204)
     })
 
-    it('should process a request with a gzipped body', async () => {
+    it('should process a request with a gzipped body', async function() {
+      this.slow(200)
+
       let r = await request.post({
-        uri: `http://127.0.0.1:${server.port}/foo?a=b&a=c`,
+        uri: `http://127.0.0.1:${server.port}/`,
         headers: {
           'content-type': 'application/binary',
           'content-encoding': 'gzip',
@@ -329,9 +377,11 @@ describe('HTTP Server', () => {
       expect(r.statusCode).to.equal(204)
     })
 
-    it('should process a request with a x-gzipped body', async () => {
+    it('should process a request with a x-gzipped body', async function() {
+      this.slow(200)
+
       let r = await request.post({
-        uri: `http://127.0.0.1:${server.port}/foo?a=b&a=c`,
+        uri: `http://127.0.0.1:${server.port}/`,
         headers: {
           'content-type': 'application/binary',
           'content-encoding': 'x-gzip',
@@ -346,30 +396,107 @@ describe('HTTP Server', () => {
       let error
       try {
         await request.post({
-          uri: `http://127.0.0.1:${server.port}/foo?a=b&a=c`,
+          uri: `http://127.0.0.1:${server.port}/`,
           headers: {
             'content-type': 'application/binary',
             'content-encoding': 'foo',
           },
+          body: new Buffer(1024),
           resolveWithFullResponse: true,
         })
       } catch (e) {
         error = e
+      } finally {
+        delete process.env.REQUEST_MAX_LENGTH
       }
 
       expect(error).to.be.instanceof(Error)
-      expect(error.response.headers['content-type']).to.equal('application/json; charset=UTF-8')
       expect(error.response).to.be.an('object')
       expect(error.response.statusCode).to.equal(415)
       expect(error.response.statusMessage).to.equal('Unsupported Media Type')
+      expect(error.response.headers['content-type']).to.equal('application/json; charset=UTF-8')
+      expect(JSON.parse(error.response.body)).to.eql({
+        statusCode: 415,
+        statusMessage: 'Unsupported Media Type',
+        message: 'Unsupported Content-Encoding "foo"',
+      })
+    })
 
-      let body = JSON.parse(error.response.body)
+    it('should abort processing beyond the limit of REQUEST_MAX_LENGTH', async function() {
+      process.env.REQUEST_MAX_LENGTH = '512kb' // big enough
 
-      expect(body.statusCode).to.equal(415)
-      expect(body.statusMessage).to.equal('Unsupported Media Type')
-      expect(body.message).to.equal('Unsupported Content-Encoding "foo"')
-      expect(body.stack).to.be.an('array')
-      expect(body.stack[0]).to.equal('415 Unsupported Media Type: Unsupported Content-Encoding "foo"')
+      let s = await new Server((req) => new Response(201, 'I am done')).start()
+
+      try {
+        let r = await request.post({
+          uri: `http://127.0.0.1:${s.port}/`,
+          headers: { 'content-type': 'application/binary' },
+          resolveWithFullResponse: true,
+          body: new Buffer(524288),
+        })
+        expect(r.statusCode).to.equal(201)
+        expect(r.statusMessage).to.equal('Created')
+        expect(r.body).to.equal('I am done')
+      } catch (e) {
+        delete process.env.REQUEST_MAX_LENGTH
+        s.stop()
+        throw e
+      }
+
+      let error
+      try {
+        await request.post({
+          uri: `http://127.0.0.1:${s.port}/`,
+          headers: { 'content-type': 'application/binary' },
+          resolveWithFullResponse: true,
+          body: new Buffer(524289),
+        })
+      } catch (e) {
+        error = e
+      } finally {
+        delete process.env.REQUEST_MAX_LENGTH
+        s.stop()
+      }
+
+      expect(error).to.be.instanceof(Error)
+
+      if (! error.response) {
+        // Sometimes the request gets killed before being processed...
+        if (/EPIPE/.test(error.message)) return this.skip()
+        throw error
+      }
+
+      expect(error.response).to.be.an('object')
+      expect(error.response.statusCode).to.equal(413)
+      expect(error.response.statusMessage).to.equal('Payload Too Large')
+      expect(error.response.headers['content-type']).to.equal('application/json; charset=UTF-8')
+      expect(JSON.parse(error.response.body)).to.eql({
+        statusCode: 413,
+        statusMessage: 'Payload Too Large',
+        message: 'Content-Length Too Large',
+      })
+    })
+
+    it('should abort processing after REQUEST_TIMEOUT', async function() {
+      this.slow(250)
+
+      process.env.REQUEST_TIMEOUT = '100ms' // big enough
+      let s = await new Server((req) => new Promise(()=>{})).start()
+
+      let error
+      try {
+        await request.get(`http://127.0.0.1:${s.port}/`)
+      } catch (e) {
+        error = e
+      } finally {
+        delete process.env.REQUEST_TIMEOUT
+        s.stop()
+      }
+
+      expect(error).to.be.instanceof(Error)
+      expect(error.response).to.be.an('object')
+      expect(error.response.statusCode).to.equal(504)
+      expect(error.response.statusMessage).to.equal('Server Timeout')
     })
   })
 })
