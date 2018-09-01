@@ -26,10 +26,12 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "bytes": "^3.0.0",
     "content-type": "^1.0.4",
     "dotenv": "^6.0.0",
     "errorlog": "^1.4.4",
     "iconv-lite": "^0.4.24",
+    "ms": "^2.1.1",
     "swagger-paths": "^1.0.3"
   },
   "devDependencies": {
