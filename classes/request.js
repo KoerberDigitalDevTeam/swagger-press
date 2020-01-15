@@ -4,7 +4,7 @@ const iconv = require('iconv-lite')
 const querystring = require('querystring')
 const contentType = require('content-type')
 
-const { splitPath } = require('swagger-paths')
+const { splitPath } = require('@koerber-internal/swagger-paths')
 
 const Headers = require('./headers')
 
