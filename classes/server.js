@@ -101,7 +101,7 @@ function adapt(handler, limit, timeout) {
     let timer = setTimeout(() => {
       req.pause()
       log.error(`Killing request ${req.method} ${req.url} after ${timeout}ms`)
-      write(res, new Response().status(504, 'Server Pimeout'))
+      write(res, new Response().status(504, 'Server Timeout'))
       written = true
     }, timeout)
 
