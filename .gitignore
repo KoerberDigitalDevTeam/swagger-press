@@ -1,3 +1,5 @@
 .eslintcache
 .nyc_output/
 coverage/
+.npmrc
+node_modules/
