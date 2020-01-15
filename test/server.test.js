@@ -131,7 +131,7 @@ describe('HTTP Server', () => {
         expect(r.statusCode).to.equal(201)
         expect(r.statusMessage).to.equal('Created')
         expect(r.body).to.equal('I am done')
-        expect(r.headers.server).to.match(/^swagger-press\/[0-9]+$/)
+        expect(r.headers.server).to.match(/^@koerber-internal/swagger-press\/[0-9]+$/)
       } finally {
         await s.stop()
       }
@@ -149,7 +149,7 @@ describe('HTTP Server', () => {
         expect(r.statusCode).to.equal(201)
         expect(r.statusMessage).to.equal('Created')
         expect(r.body).to.equal('I am done')
-        expect(r.headers.server).to.match(/^swagger-press\/[0-9]+$/)
+        expect(r.headers.server).to.match(/^@koerber-internal/swagger-press\/[0-9]+$/)
       } finally {
         await s.stop()
       }
